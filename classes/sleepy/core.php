@@ -62,10 +62,18 @@ class Sleepy_Core extends Model {
 	{
 		$request = $this->get_request($url);
 		$request->method('POST');
+		
 		$request->post($this->_data);
 		$response = $request->execute();
 		
-		$this->load_data($response);
+		if($response->status() === 200)
+		{
+			return $this->load_data($response->body());
+		}
+		else
+		{
+			throw new Kohana_Exception('Sleepy Request Failed');
+		}
 	}
 	
 	public function set_fields(array $data, array $keys = NULL)

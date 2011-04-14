@@ -39,6 +39,7 @@ class Sleepy_Core extends Model {
 		}
 		
 		$this->_status = Sleepy_Core::STATE_LOADED;
+		
 		return $this;
 	}
 	
@@ -61,12 +62,10 @@ class Sleepy_Core extends Model {
 	{
 		$request = $this->get_request($url);
 		$request->method('POST');
-		$request->post(json_encode($this->_data));
+		$request->post($this->_data);
 		$response = $request->execute();
 		
-		$this->load_data($response->body());
-		
-		$this->_status = Sleepy_Core::STATE_LOADED;
+		$this->load_data($response);
 	}
 	
 	public function set_fields(array $data, array $keys = NULL)
@@ -129,6 +128,5 @@ class Sleepy_Core extends Model {
 	{
 		return $this->_data;
 	}
-	
 	
 } // End Sleepy_Core

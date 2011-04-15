@@ -11,6 +11,11 @@ class Sleepy_Core extends Model {
 	
 	protected $_status = Sleepy_Core::STATE_NEW;
 	
+	public function __construct()
+	{
+		$this->_data_url = Kohana::config('sleepy.url').$this->_data_url;
+	}
+	
 	public function load($url = NULL)
 	{
 		$request = $this->get_request($url);
@@ -130,6 +135,21 @@ class Sleepy_Core extends Model {
 	public function __isset($name)
 	{
 		return isset($this->_data[$name]);
+	}
+	
+	public function __call($name, $arguments)
+	{	
+		$request = $this->get_request($this->_data_url.$name);
+		
+		if ( ! empty($arguments))
+		{
+			$request->method('POST');
+			$request->post($arguments);
+		}
+		
+		$response = $request->execute();
+		
+		return $response;
 	}
 	
 	public function as_array()

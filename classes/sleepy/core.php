@@ -26,8 +26,8 @@ class Sleepy_Core extends Model {
 			return $this->load_data($response->body());
 		}
 		else
-		{
-			throw new Kohana_Exception('Sleepy Request Failed');
+		{	
+			throw new Kohana_Exception('Sleepy Request Failed, :response', array(':response', $response));
 		}
 	}
 	
@@ -55,7 +55,7 @@ class Sleepy_Core extends Model {
 	
 	public function update($url = NULL)
 	{
-		$request = $this->get_request($url);
+		$request = $this->get_request($this->_data_url.$url);
 		$request->method('POST');
 		$request->post($this->_data);
 		$request->execute();
@@ -65,7 +65,7 @@ class Sleepy_Core extends Model {
 	
 	public function create($url = NULL)
 	{
-		$request = $this->get_request($url);
+		$request = $this->get_request($this->_data_url.$url);
 		$request->method('POST');
 		
 		$request->post($this->_data);
@@ -77,7 +77,7 @@ class Sleepy_Core extends Model {
 		}
 		else
 		{
-			throw new Kohana_Exception('Sleepy Request Failed');
+			throw new Kohana_Exception('Sleepy Request Failed, :response', array(':response' => $response));
 		}
 	}
 	

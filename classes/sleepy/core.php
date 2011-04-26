@@ -2,6 +2,8 @@
 
 class Sleepy_Core extends Model {
 	
+	public $decoded_response;
+	
 	protected $_data_url = '';
 	protected $_data = array();
 	
@@ -21,6 +23,8 @@ class Sleepy_Core extends Model {
 		$request = $this->get_request($url);
 		$response = $request->execute();
 		
+		$this->response = $response;
+		
 		if($response->status() === 200)
 		{
 			return $this->load_data($response->body());
@@ -34,6 +38,8 @@ class Sleepy_Core extends Model {
 	protected function load_data($data)
 	{
 		$decoded = json_decode($data);
+		
+		$this->decoded_response = $decoded;
 		
 		foreach($decoded as $key => $value)
 		{
@@ -58,7 +64,7 @@ class Sleepy_Core extends Model {
 		$request = $this->get_request($this->_data_url.$url);
 		$request->method('POST');
 		$request->post($this->_data);
-		$request->execute();
+		$response = $request->execute();
 		
 		$this->_status = Sleepy_Core::STATE_LOADED;
 	}

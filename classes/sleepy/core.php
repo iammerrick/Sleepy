@@ -2,7 +2,7 @@
 
 class Sleepy_Core extends Model {
 	
-	public $decoded_response;
+	private $_decoded_response;
 	
 	protected $_data_url = '';
 	protected $_data = array();
@@ -39,7 +39,7 @@ class Sleepy_Core extends Model {
 	{
 		$decoded = json_decode($data);
 		
-		$this->decoded_response = $decoded;
+		$this->_decoded_response = $decoded;
 		
 		foreach($decoded as $key => $value)
 		{
@@ -115,6 +115,11 @@ class Sleepy_Core extends Model {
 		}
 		
 		return Request::factory($url);
+	}
+	
+	public function response()
+	{
+		return $this->_decoded_response;
 	}
 	
 	public function __get($key)

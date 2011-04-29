@@ -159,11 +159,12 @@ class Sleepy_Core extends Model {
 		if( ! empty($arguments))
 		{			
 			$request->method('POST');
+			$request->headers('content-type', 'application/json'); // A bit application specific I know.
 		}
 		
 		if ( ! is_array($arguments) OR is_string($arguments))
 		{
-			$request->post($arguments);
+			$request->post('body', json_encode($arguments)); // Again a bit specific
 		}
 		
 		$response = $request->execute();

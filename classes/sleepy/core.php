@@ -8,9 +8,7 @@
  */
 class Sleepy_Core extends Model {
 	
-	private $_decoded_response;
-	
-	protected $_data_url = '';
+	protected $_url = '';
 	protected $_data = array();
 	
 	const STATE_NEW = 'new';
@@ -19,86 +17,33 @@ class Sleepy_Core extends Model {
 	
 	protected $_status = Sleepy_Core::STATE_NEW;
 	
+	
 	/**
-	 * Constructor, if you don't pass a url it will fall back
-	 * to the Sleep configuration. This is useful if you plan
-	 * on working with more then one RESTful service.
+	 * Constructor, instantiate $_url from configuration.
 	 *
-	 * @param string $url 
 	 * @author Merrick Christensen
 	 */
-	public function __construct($url = NULL)
+	public function __construct()
 	{
-		if($url === NULL)
-		{
-			$this->_data_url = Kohana::config('sleepy.url').$this->_data_url;
-		}
-		else
-		{
-			$this->_data_url = $url.$this->_data_url;
-		}
+		$this->_url = Kohana::config('sleepy.url').$this->_url;
 	}
 	
 	/**
-	 * Take a request, execute it. If it is successful return the response.
-	 * Otherwise throw an exception.
-	 *
-	 * @param string $request 
-	 * @return object Request response
-	 * @author Merrick Christensen
-	 */
-	public function execute($request)
-	{
-		$response = $request->execute();
-		
-		if($response->status() === 200)
-		{
-			$this->_decoded_response = json_decode($response);
-			return $response;
-		}
-		else
-		{
-			throw new Kohana_Exception('Sleepy Request Failed, :response', array(':response', $response), '');
-		}
-	}
-	
-	/**
-	 * Load in data from the rest service and parse it into $_data.
-	 *
-	 * @param string $url 
-	 * @return void
-	 * @author Merrick Christensen
-	 */
-	public function load($url = NULL)
-	{
-		$request = $this->get_request($url);
-		$response = $this->execute($request);
-		
-		$this->load_data(); // No need to pass data pulls from instance variable
-		
-	}
-	
-	/**
-	 * Loads either passed JSON or instance decoded JSON to the objects $_data.
+	 * Loads either passed data or a string of JSON and sets to the objects $_data.
 	 *
 	 * @param string JSON $data 
 	 * @return this
 	 * @author Merrick Christensen
 	 */
-	public function load_data($data = NULL)
+	public function load($data)
 	{
 		
-		if($data !== NULL)
+		if(is_string($data))
 		{
-			$decoded = json_decode($data);
-			$this->_decoded_response = $decoded;
-		}
-		else
-		{
-			$decoded = $this->_decoded_response;
+			$data = json_decode($data);
 		}
 		
-		foreach($decoded as $key => $value)
+		foreach($data as $key => $value)
 		{
 			if(array_key_exists($key, $this->_data))
 			{
@@ -107,43 +52,6 @@ class Sleepy_Core extends Model {
 		}
 		
 		$this->_status = Sleepy_Core::STATE_LOADED;
-		
-		return $this;
-	}
-	
-	public function save($url = NULL)
-	{
-	    return $this->loaded() ? $this->update($url) : $this->create($url);
-	}
-	
-	public function update($url = NULL)
-	{
-		$request = $this->get_request($this->_data_url.$url);
-		$request->method('POST');
-		$request->post($this->_data);
-		
-		$response = $this->execute($request);
-		
-		$this->load_data();
-		
-		$this->_status = Sleepy_Core::STATE_LOADED;
-	}
-	
-	/**
-	 * Generates request and posts the variables to the service.
-	 * Used to create new items on the Restful service.
-	 * Calls to set $_data to returned values.
-	 *
-	 * @param string $url 
-	 * @return this
-	 * @author Merrick Christensen
-	 */
-	public function create($url = NULL)
-	{
-		$request = $this->get_request($this->_data_url.$url);
-		$request->method('POST');
-		$request->post($this->_data);
-		$response = $this->execute($request);
 		
 		return $this;
 	}
@@ -182,35 +90,7 @@ class Sleepy_Core extends Model {
 	{
 		return $this->_status === Sleepy_Core::STATE_LOADED;
 	}
-	
-	/**
-	 * Generate a request form the sleepy urls.
-	 *
-	 * @param string $url 
-	 * @return Request
-	 * @author Merrick Christensen
-	 */
-	private function get_request($url = NULL)
-	{
-		if($url === NULL)
-		{
-			$url = $this->_data_url;
-		}
-		
-		return Request::factory($url);
-	}
-	
-	/**
-	 * Return the last parsed JSON response.
-	 *
-	 * @return void
-	 * @author Merrick Christensen
-	 */
-	public function response()
-	{
-		return $this->_decoded_response;
-	}
-	
+
 	/**
 	 * Get a value by key from data.
 	 *
@@ -225,7 +105,7 @@ class Sleepy_Core extends Model {
 		 	return $this->_data[$key];
 		}
 
-		throw new Kohana_Exception('Field '.$key.' does not exist in '.get_class($this).'!', array(), '');
+		throw new Sleepy_Exception('Field '.$key.' does not exist in '.get_class($this).'!', array());
 	}
 	
 	/**
@@ -269,15 +149,33 @@ class Sleepy_Core extends Model {
 	 */
 	public function __call($name, $arguments)
 	{	
-		$request = $this->get_request($this->_data_url.$name);
+		return $this->call($name, $arguments);
+	}
+	
+	public function call($name, $arguments)
+	{
+		$request = Request::factory($this->_url.$name);
 		
-		if ( ! empty($arguments))
-		{
+		if( ! empty($arguments))
+		{			
 			$request->method('POST');
+		}
+		
+		if ( ! is_array($arguments) OR is_string($arguments))
+		{
 			$request->post($arguments);
 		}
 		
 		$response = $request->execute();
+		
+		if($response->status() === 200)
+		{
+			$response = json_decode($response->body());
+		}
+		else
+		{
+			throw new Sleepy_Exception('Request failed :response with :url !', array(':response' => $response->body(), ':url' => $this->_url.$name));
+		}
 		
 		return $response;
 	}
@@ -291,6 +189,11 @@ class Sleepy_Core extends Model {
 	public function as_array()
 	{
 		return $this->_data;
+	}
+	
+	public function as_json()
+	{
+		return json_encode($this->_data);
 	}
 	
 } // End Sleepy_Core

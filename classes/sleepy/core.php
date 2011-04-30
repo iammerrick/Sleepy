@@ -162,9 +162,9 @@ class Sleepy_Core extends Model {
 			$request->headers('content-type', 'application/json'); // A bit application specific I know.
 		}
 		
-		if ( ! is_array($arguments) OR is_string($arguments))
+		if (is_array($arguments))
 		{
-			$request->post('body', json_encode($arguments)); // Again a bit specific
+			$request->body(json_encode($arguments)); // Again a bit specific
 		}
 		
 		$response = $request->execute();

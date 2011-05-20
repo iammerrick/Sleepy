@@ -167,15 +167,23 @@ class Sleepy_Core extends Model {
 			$request->body(json_encode($arguments)); // Again a bit specific
 		}
 		
-		$response = $request->execute();
+		try
+		{
+			$response = $request->execute();
 		
-		if($response->status() === 200)
-		{
-			$response = json_decode($response->body());
+		
+			if($response->status() === 200)
+			{
+				$response = json_decode($response->body());
+			}
+			else
+			{
+				throw new Sleepy_Exception('Request failed :response with :url !', array(':response' => $response->body(), ':url' => $this->_url.$name));
+			}
 		}
-		else
+		catch(HttpInvalidParamException $e)
 		{
-			throw new Sleepy_Exception('Request failed :response with :url !', array(':response' => $response->body(), ':url' => $this->_url.$name));
+			throw new Sleepy_Exception('Sassy server down.');
 		}
 		
 		return $response;

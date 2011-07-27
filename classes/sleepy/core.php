@@ -25,7 +25,7 @@ class Sleepy_Core extends Model {
 	 */
 	public function __construct()
 	{
-		$this->_url = Kohana::config('sleepy.url').$this->_url;
+		$this->_url = Kohana::$config->load('sleepy')->get('url').$this->_url;
 	}
 	
 	/**
